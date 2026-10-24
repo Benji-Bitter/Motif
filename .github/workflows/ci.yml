@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer || true
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      - name: Assemble unsigned .app
+        run: Scripts/build_app.sh release
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Motif-unsigned-app
+          path: build/Motif.app
+          retention-days: 14
