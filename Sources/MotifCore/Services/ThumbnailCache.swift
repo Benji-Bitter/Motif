@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 import CoreGraphics
 import ImageIO
 import os
@@ -26,7 +27,7 @@ public final class ThumbnailCache: @unchecked Sendable {
         let task = inFlight.withLock { table -> Task<CGImage?, Never> in
             if let existing = table[assetID] { return existing }
             let task = Task.detached(priority: .utility) { [self] in
-                self.generate(assetID: assetID, sourceURL: sourceURL, maxPixel: maxPixel)
+                await self.generate(assetID: assetID, sourceURL: sourceURL, maxPixel: maxPixel)
             }
             table[assetID] = task
             return task
@@ -36,7 +37,7 @@ public final class ThumbnailCache: @unchecked Sendable {
         return result
     }
 
-    private func generate(assetID: UUID, sourceURL: URL, maxPixel: Int) -> CGImage? {
+    private func generate(assetID: UUID, sourceURL: URL, maxPixel: Int) async -> CGImage? {
         let key = assetID.uuidString as NSString
         let diskURL = directory.appendingPathComponent("\(assetID.uuidString).jpg")
 
@@ -44,10 +45,27 @@ public final class ThumbnailCache: @unchecked Sendable {
             memory.setObject(image, forKey: key)
             return image
         }
-        guard let image = processor.thumbnail(of: sourceURL, maxPixelSize: maxPixel) else { return nil }
+
+        let ext = sourceURL.pathExtension.lowercased()
+        let image: CGImage?
+        if ["mov", "mp4", "m4v", "qt"].contains(ext) {
+            // ImageIO can't read videos — grab a poster frame instead.
+            image = await videoPosterFrame(url: sourceURL, maxPixel: maxPixel)
+        } else {
+            image = processor.thumbnail(of: sourceURL, maxPixelSize: maxPixel)
+        }
+        guard let image else { return nil }
         memory.setObject(image, forKey: key)
         persist(image, to: diskURL)
         return image
+    }
+
+    private func videoPosterFrame(url: URL, maxPixel: Int) async -> CGImage? {
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: maxPixel, height: maxPixel)
+        return try? await generator.image(at: .zero).image
     }
 
     /// Stores an externally produced thumbnail (e.g. a rendered card preview).

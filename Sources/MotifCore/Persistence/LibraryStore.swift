@@ -103,11 +103,11 @@ public actor LibraryStore {
     }
 
     /// Absolute URL for a stored media file name.
-    public func mediaURL(fileName: String) -> URL {
+    public nonisolated func mediaURL(fileName: String) -> URL {
         paths.files.appendingPathComponent(fileName)
     }
 
-    public func thumbnailURL(for id: UUID) -> URL {
+    public nonisolated func thumbnailURL(for id: UUID) -> URL {
         paths.thumbnails.appendingPathComponent("\(id.uuidString).jpg")
     }
 

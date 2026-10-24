@@ -87,7 +87,7 @@ public enum CardGeometry {
 
 /// Named export resolutions for card artwork. 1536x969 is the de-facto
 /// community preset for card-skin artwork (approx. 18 px/mm).
-public struct CardExportPreset: Equatable, Sendable, Identifiable {
+public struct CardExportPreset: Hashable, Sendable, Identifiable {
     public var id: String { name }
     public let name: String
     public let width: Int
