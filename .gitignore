@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift / Xcode
+.build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.swiftpm/
+Package.resolved
+
+# Build artifacts
+build/
+dist/
+*.app
+*.dmg
+*.ipa
+*.xcarchive
+Motif.app/
+Artifacts/
+
+# Local secrets / env
+.env
+*.local
+
+# Test output
+TestOutput/
